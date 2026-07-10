@@ -114,4 +114,18 @@ app.use('/api/v1/manager',   managerRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+/* ── TEMP DIAGNOSTIC: explicit connectDB() call + readyState ── */
+app.get('/api/v1/diag/mongoose', async (req, res) => {
+  const mongoose = require('mongoose');
+  const connectDB = require('./config/db');
+  const stateBefore = mongoose.connection.readyState;
+  const start = Date.now();
+  try {
+    await connectDB();
+    res.json({ result: 'CONNECT_OK', ms: Date.now() - start, stateBefore, stateAfter: mongoose.connection.readyState });
+  } catch (err) {
+    res.json({ result: 'CONNECT_FAILED', ms: Date.now() - start, stateBefore, stateAfter: mongoose.connection.readyState, message: err.message });
+  }
+});
+
 module.exports = app;
