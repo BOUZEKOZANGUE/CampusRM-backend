@@ -15,6 +15,9 @@ async function connectDB() {
     cached.promise = mongoose.connect(process.env.MONGO_URI).then((mongooseInstance) => {
       console.log(`MongoDB connected: ${mongooseInstance.connection.host}`);
       return mongooseInstance;
+    }).catch((err) => {
+      cached.promise = null;
+      throw err;
     });
   }
   cached.conn = await cached.promise;
