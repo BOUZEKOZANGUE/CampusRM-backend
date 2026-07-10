@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 /* ── Health check ─────────────────────────────────────────── */
 app.get('/api/v1/health', (req, res) => {
-  res.json({ success: true, message: 'Campus Resource Management API is running' });
+  res.json({ success: true, message: 'Campus Resource Management API is running', deployMarker: 'DIAG-7f3k2' });
 });
 
 /* ── Module routers (versioned prefix) ────────────────────── */
