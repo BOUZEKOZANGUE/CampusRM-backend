@@ -71,6 +71,31 @@ app.get('/api/v1/diag/tcp', (req, res) => {
   Promise.all(hosts.map(testHost)).then((results) => res.json({ results }));
 });
 
+/* ── TEMP DIAGNOSTIC: raw TLS handshake test ── */
+app.get('/api/v1/diag/tls', (req, res) => {
+  const tls = require('tls');
+  const host = 'ac-a2sr6sj-shard-00-00.cmbweb1.mongodb.net';
+  const port = 27017;
+  const start = Date.now();
+  let done = false;
+  const socket = tls.connect({ host, port, servername: host, timeout: 8000 }, () => {
+    done = true;
+    res.json({ result: 'TLS_CONNECTED', ms: Date.now() - start, authorized: socket.authorized, authorizationError: socket.authorizationError });
+    socket.destroy();
+  });
+  socket.on('timeout', () => {
+    if (done) return;
+    done = true;
+    res.json({ result: 'TLS_TIMEOUT', ms: Date.now() - start });
+    socket.destroy();
+  });
+  socket.on('error', (err) => {
+    if (done) return;
+    done = true;
+    res.json({ result: 'TLS_ERROR', message: err.message, code: err.code, ms: Date.now() - start });
+  });
+});
+
 /* ── Module routers (versioned prefix) ────────────────────── */
 app.use('/api/v1/auth',      authRoutes);
 app.use('/api/v1/admin',     adminRoutes);
