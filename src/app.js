@@ -34,32 +34,41 @@ app.get('/api/v1/health', (req, res) => {
   res.json({ success: true, message: 'Campus Resource Management API is running', deployMarker: 'DIAG-7f3k2' });
 });
 
-/* ── TEMP DIAGNOSTIC: raw TCP reachability test to a Mongo shard host ── */
+/* ── TEMP DIAGNOSTIC: raw TCP reachability test to all Mongo shard hosts ── */
 app.get('/api/v1/diag/tcp', (req, res) => {
   const net = require('net');
-  const host = 'ac-a2sr6sj-shard-00-00.cmbweb1.mongodb.net';
   const port = 27017;
-  const start = Date.now();
-  const socket = new net.Socket();
-  let done = false;
-  socket.setTimeout(8000);
-  socket.on('connect', () => {
-    done = true;
-    res.json({ result: 'TCP_CONNECTED', ms: Date.now() - start, host, port });
-    socket.destroy();
+  const hosts = [
+    'ac-a2sr6sj-shard-00-00.cmbweb1.mongodb.net',
+    'ac-a2sr6sj-shard-00-01.cmbweb1.mongodb.net',
+    'ac-a2sr6sj-shard-00-02.cmbweb1.mongodb.net',
+  ];
+
+  const testHost = (host) => new Promise((resolve) => {
+    const start = Date.now();
+    const socket = new net.Socket();
+    let done = false;
+    socket.setTimeout(8000);
+    socket.on('connect', () => {
+      done = true;
+      resolve({ host, result: 'TCP_CONNECTED', ms: Date.now() - start });
+      socket.destroy();
+    });
+    socket.on('timeout', () => {
+      if (done) return;
+      done = true;
+      resolve({ host, result: 'TCP_TIMEOUT', ms: Date.now() - start });
+      socket.destroy();
+    });
+    socket.on('error', (err) => {
+      if (done) return;
+      done = true;
+      resolve({ host, result: 'TCP_ERROR', message: err.message, ms: Date.now() - start });
+    });
+    socket.connect(port, host);
   });
-  socket.on('timeout', () => {
-    if (done) return;
-    done = true;
-    res.json({ result: 'TCP_TIMEOUT', ms: Date.now() - start, host, port });
-    socket.destroy();
-  });
-  socket.on('error', (err) => {
-    if (done) return;
-    done = true;
-    res.json({ result: 'TCP_ERROR', message: err.message, ms: Date.now() - start, host, port });
-  });
-  socket.connect(port, host);
+
+  Promise.all(hosts.map(testHost)).then((results) => res.json({ results }));
 });
 
 /* ── Module routers (versioned prefix) ────────────────────── */
