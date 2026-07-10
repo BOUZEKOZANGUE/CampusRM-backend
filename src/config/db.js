@@ -12,6 +12,9 @@ async function connectDB() {
     return cached.conn;
   }
   if (!cached.promise) {
+    const uri = process.env.MONGO_URI || '';
+    const maskedHost = uri.replace(/\/\/.*@/, '//<credentials>@');
+    console.log(`[connectDB] Attempting connection to: ${maskedHost}`);
     cached.promise = mongoose.connect(process.env.MONGO_URI).then((mongooseInstance) => {
       console.log(`MongoDB connected: ${mongooseInstance.connection.host}`);
       return mongooseInstance;
