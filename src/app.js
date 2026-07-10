@@ -110,10 +110,6 @@ app.use('/api/v1/faculty',   facultyRoutes);
 app.use('/api/v1/students',  studentsRoutes);
 app.use('/api/v1/manager',   managerRoutes);
 
-/* ── Error handling (must be last) ───────────────────────── */
-app.use(notFoundHandler);
-app.use(errorHandler);
-
 /* ── TEMP DIAGNOSTIC: explicit connectDB() call + readyState ── */
 app.get('/api/v1/diag/mongoose', async (req, res) => {
   const mongoose = require('mongoose');
@@ -127,5 +123,9 @@ app.get('/api/v1/diag/mongoose', async (req, res) => {
     res.json({ result: 'CONNECT_FAILED', ms: Date.now() - start, stateBefore, stateAfter: mongoose.connection.readyState, message: err.message });
   }
 });
+
+/* ── Error handling (must be last) ───────────────────────── */
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 module.exports = app;
